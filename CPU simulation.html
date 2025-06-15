@@ -3,15 +3,28 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <body>
+     <img src="logo.png" alt="CPU Scheduling" style="width:100px;position: absolute;top: 10px;left: 10px; margin: 1rem auto; display:block;">
+    <img src="logo1.png" alt="CPU Scheduling" style="width:100px;position: absolute;top: 10px;right: 10px; margin: 1rem auto; display:block;">
+
+     <h1>ACHARYA NARENDRA DEV COLLEGE
+    <h2>UNIVERSITY OF DELHI
+    <br>DEPARTMENT OF COMPUTER SCIENCE</h2>
+    </h2>
+  </h1>
+  
+   <div class="container">
+    <!-- ...existing code... -->
   <title>Scheduling Algorithm Simulator</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
+      body {
       background-color: #07e6f6ee;
       color: white;
       font-family: 'Times New Roman', Times, serif;
       text-align: center;
       padding: 2rem;
+  
     }
     h1 {
       font-size: 2.5rem;
@@ -19,15 +32,16 @@
     }
     .container {
       display: flex;
-      justify-content: space-around;
+      justify-content: center;
       flex-wrap: wrap;
-      gap: 2rem;
+      gap: 3rem;
     }
     .card {
-      background-color: rgba(7, 246, 110, 0.614);
+      background-color: rgba(44, 126, 85, 0.964);
       padding: 2rem;
       border-radius: 12px;
       width: 300px;
+      margin: 1rem;
       border: 1px solid #333;
       box-shadow: 2px 2px 4px #000000;
     }
@@ -64,6 +78,7 @@
       text-shadow: 2px 2px 4px #000000;
       background: linear-gradient(to right, #ffffff, #00ffff);
       -webkit-background-clip: text;
+      background-clip: text;
       -webkit-text-fill-color: rgba(255, 255, 255, 0.7);
       font-size: 48px;
       font-weight: bold;
@@ -78,9 +93,11 @@
   </style>
 </head>
 <body>
+ <div class="typewriter-container">
   <h1 class="typewriter">SCHEDULING ALGORITHM SIMULATOR</h1>
+</div>
   <div class="container">
-    <div class="card">
+<div class="card">
       <h2>Select a scheduling algorithm to simulate.</h2>
       <select id="algorithm">
         <option value="">Select an algorithm</option>
@@ -173,54 +190,103 @@ function submitSimulation() {
   const n = pList.length;
 
   if (algo === 'FCFS' && isPreemptive) return alert("FCFS cannot be preemptive.");
+
   if (algo === 'Round Robin') {
     if (isNaN(quantum) || quantum <= 0) return alert("Enter valid quantum");
     const queue = [];
     while (completed < n) {
-      pList.forEach(p => { if (p.arrival === time) queue.push(p); });
-      if (!queue.length) { ganttLog.push({ id: 'Idle', color: '#ccc', duration: 1 }); time++; continue; }
+      pList.forEach(p => {
+        if (p.arrival === time && !queue.includes(p)) queue.push(p);
+      });
+
+      if (!queue.length) {
+        ganttLog.push({ id: 'Idle', color: '#ccc', duration: 1 });
+        time++;
+        continue;
+      }
+
       const current = queue.shift();
       const slice = Math.min(current.remaining, quantum);
       ganttLog.push({ id: `P${current.id}`, color: current.color, duration: slice });
-      current.remaining -= slice;
       time += slice;
+      current.remaining -= slice;
+
+      // Add newly arrived processes to queue
       pList.forEach(p => {
-        if (p.arrival > time - slice && p.arrival <= time && !queue.includes(p) && p.remaining > 0) queue.push(p);
+        if (p.arrival > time - slice && p.arrival <= time && !queue.includes(p) && p.remaining > 0) {
+          queue.push(p);
+        }
       });
-      if (current.remaining > 0) queue.push(current);
-      else {
+
+      if (current.remaining > 0) {
+        queue.push(current);
+      } else {
         completed++;
-        const tat = time - current.arrival;
-        const wait = tat - current.burst;
-        totalWaiting += wait; totalTurnaround += tat;
-        table.push(`<tr><td>${current.id}</td><td>${current.arrival}</td><td>${current.burst}</td><td>${wait}</td><td>${tat}</td></tr>`);
+        current.completion = time;
+        current.turnaround = current.completion - current.arrival;
+        current.waiting = current.turnaround - current.burst;
+        totalWaiting += current.waiting;
+        totalTurnaround += current.turnaround;
+        table.push(`<tr><td>${current.id}</td><td>${current.arrival}</td><td>${current.burst}</td><td>${current.completion}</td><td>${current.waiting}</td><td>${current.turnaround}</td></tr>`);
       }
     }
   } else {
-    const sorted = [...pList].sort((a, b) => a.arrival - b.arrival);
-    if (algo === 'SJF') sorted.sort((a, b) => a.burst - b.burst);
-    if (algo === 'Priority') sorted.sort((a, b) => a.priority - b.priority);
+    // Sort processes based on selected algo
+    let sorted = [...pList];
+    if (algo === 'FCFS') {
+      sorted.sort((a, b) => a.arrival - b.arrival);
+    } else if (algo === 'SJF') {
+      sorted.sort((a, b) => a.arrival - b.arrival || a.burst - b.burst);
+    } else if (algo === 'Priority') {
+      sorted.sort((a, b) => a.arrival - b.arrival || a.priority - b.priority);
+    }
+
     sorted.forEach(p => {
       time = Math.max(time, p.arrival);
-      totalWaiting += time - p.arrival;
-      totalTurnaround += (time + p.burst - p.arrival);
+      p.completion = time + p.burst;
+      p.turnaround = p.completion - p.arrival;
+      p.waiting = p.turnaround - p.burst;
+      totalWaiting += p.waiting;
+      totalTurnaround += p.turnaround;
       ganttLog.push({ id: `P${p.id}`, color: p.color, duration: p.burst });
-      table.push(`<tr><td>${p.id}</td><td>${p.arrival}</td><td>${p.burst}</td><td>${time - p.arrival}</td><td>${time + p.burst - p.arrival}</td></tr>`);
+      table.push(`<tr><td>${p.id}</td><td>${p.arrival}</td><td>${p.burst}</td><td>${p.completion}</td><td>${p.waiting}</td><td>${p.turnaround}</td></tr>`);
       time += p.burst;
     });
   }
 
-  gantt = ganttLog.map(block => `<div style="display:inline-block;width:${block.duration * 40}px;background:${block.color};padding:10px;margin-right:1px">${block.id}</div>`).join('');
+  // Build Gantt chart + tick marks
+  gantt = '';
+  let tickMarks = '<div style="display:flex;align-items:center;">';
+  let currentTime = 0;
+
+  ganttLog.forEach(block => {
+    const width = block.duration * 40;
+    gantt += `<div style="display:inline-block;width:${width}px;background:${block.color};padding:10px 0;margin-right:1px;text-align:center;color:white">${block.id}</div>`;
+    tickMarks += `<div style="width:${width}px;text-align:left;font-size:12px">${currentTime}</div>`;
+    currentTime += block.duration;
+  });
+
+  tickMarks += `<div style="font-size:12px">${currentTime}</div></div>`;
+
   const avgWait = (totalWaiting / n).toFixed(2);
   const avgTat = (totalTurnaround / n).toFixed(2);
+
   document.getElementById('output').innerHTML = `
-    <h2>Gantt Chart</h2><div>${gantt}</div>
+    <h2>Gantt Chart</h2>
+    <div>${gantt}</div>
+    ${tickMarks}
     <table border="1" style="width:100%; margin-top:2rem; text-align:center">
       <tr style="background:#333; color:white">
-        <th>Process ID</th><th>Arrival Time</th><th>Burst Time</th><th>Waiting Time</th><th>Turnaround Time</th>
-      </tr>${table.join('')}
+        <th>Process ID</th>
+        <th>Arrival Time</th>
+        <th>Burst Time</th>
+        <th>Completion Time</th>
+        <th>Waiting Time</th>
+        <th>Turnaround Time</th>
+      </tr>
+      ${table.join('')}
       <tr style="background:#222;color:white">
-        <td colspan="3">Total</td><td>${totalWaiting}</td><td>${totalTurnaround}</td>
+        <td colspan="3">Total</td><td>–</td><td>${totalWaiting}</td><td>${totalTurnaround}</td>
       </tr>
     </table>
     <div style="margin-top:2rem">
@@ -230,6 +296,7 @@ function submitSimulation() {
       <strong>CPU Utilization:</strong> 100%
     </div>`;
 }
+
 </script>
 </body>
 </html>
