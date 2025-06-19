@@ -193,6 +193,15 @@
       let table = [];
       let totalWaiting = 0, totalTurnaround = 0;
 
+      function logCompletion(p) {
+        p.completion = time;
+        p.turnaround = +(p.completion - p.arrival).toFixed(2);
+        p.waiting = +(p.turnaround - p.burst).toFixed(2);
+        totalWaiting += p.waiting;
+        totalTurnaround += p.turnaround;
+        table.push(p);
+      }
+
       if (algo === 'SJF' && isPreemptive) {
         while (completed < n) {
           const available = pList.filter(p => p.arrival <= time && p.remaining > 0);
@@ -207,12 +216,7 @@
           ganttLog.push({ id: `P${current.id}`, color: current.color, duration: 0.1 });
           time = +(time + 0.1).toFixed(1);
           if (Math.abs(current.remaining) < 1e-9) {
-            current.completion = time;
-            current.turnaround = +(current.completion - current.arrival).toFixed(2);
-            current.waiting = +(current.turnaround - current.burst).toFixed(2);
-            totalWaiting += current.waiting;
-            totalTurnaround += current.turnaround;
-            table.push(current);
+            logCompletion(current);
             completed++;
           }
         }
@@ -229,19 +233,69 @@
           const current = ready[0];
           time = Math.max(time, current.arrival);
           ganttLog.push({ id: `P${current.id}`, color: current.color, duration: current.burst });
-          current.completion = +(time + current.burst).toFixed(2);
-          current.turnaround = +(current.completion - current.arrival).toFixed(2);
-          current.waiting = +(current.turnaround - current.burst).toFixed(2);
-          totalWaiting += current.waiting;
-          totalTurnaround += current.turnaround;
-          table.push(current);
-          time = current.completion;
+          time = +(time + current.burst).toFixed(2);
+          logCompletion(current);
           completed++;
           remaining.splice(remaining.indexOf(current), 1);
         }
-      } else {
-        alert('Use the original logic for FCFS, RR, or Priority');
-        return;
+      } else if (algo === 'FCFS') {
+        pList.sort((a, b) => a.arrival - b.arrival);
+        for (const p of pList) {
+          time = Math.max(time, p.arrival);
+          ganttLog.push({ id: `P${p.id}`, color: p.color, duration: p.burst });
+          time = +(time + p.burst).toFixed(2);
+          logCompletion(p);
+        }
+      } else if (algo === 'Priority') {
+        while (completed < n) {
+          const available = pList.filter(p => p.arrival <= time && p.remaining > 0);
+          if (available.length === 0) {
+            ganttLog.push({ id: 'Idle', color: '#ccc', duration: 0.1 });
+            time = +(time + 0.1).toFixed(1);
+            continue;
+          }
+          available.sort((a, b) => a.priority - b.priority);
+          const current = available[0];
+          time = Math.max(time, current.arrival);
+          ganttLog.push({ id: `P${current.id}`, color: current.color, duration: current.burst });
+          time = +(time + current.burst).toFixed(2);
+          current.remaining = 0;
+          logCompletion(current);
+          completed++;
+        }
+      } else if (algo === 'Round Robin') {
+        if (isNaN(quantum) || quantum <= 0) return alert("Enter valid quantum");
+        const queue = [];
+        while (completed < n) {
+          pList.forEach(p => {
+            if (p.arrival <= time && p.remaining > 0 && !queue.includes(p)) queue.push(p);
+          });
+
+          if (!queue.length) {
+            ganttLog.push({ id: 'Idle', color: '#ccc', duration: 0.1 });
+            time = +(time + 0.1).toFixed(1);
+            continue;
+          }
+
+          const current = queue.shift();
+          const slice = Math.min(current.remaining, quantum);
+          ganttLog.push({ id: `P${current.id}`, color: current.color, duration: slice });
+          current.remaining = +(current.remaining - slice).toFixed(2);
+          time = +(time + slice).toFixed(2);
+
+          pList.forEach(p => {
+            if (p.arrival > time - slice && p.arrival <= time && p.remaining > 0 && !queue.includes(p)) {
+              queue.push(p);
+            }
+          });
+
+          if (current.remaining > 0) {
+            queue.push(current);
+          } else {
+            logCompletion(current);
+            completed++;
+          }
+        }
       }
 
       const gantt = ganttLog.map(block => `<div style="display:inline-block;width:${block.duration * 40}px;background:${block.color};padding:10px 0;margin-right:1px;text-align:center;color:white">${block.id}</div>`).join('');
@@ -292,5 +346,6 @@
         </div>`;
     }
   </script>
+
 </body>
 </html>
