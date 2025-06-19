@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <body>
+     <img src="logo.png" alt="CPU Scheduling" style="width:100px;position: absolute;top: 10px;left: 10px; margin: 1rem auto; display:block;">
+    <img src="logo1.png" alt="CPU Scheduling" style="width:100px;position: absolute;top: 10px;right: 10px; margin: 1rem auto; display:block;">
+
+     <h1>ACHARYA NARENDRA DEV COLLEGE
+    <h2>UNIVERSITY OF DELHI
+    <br>DEPARTMENT OF COMPUTER SCIENCE</h2>
+    </h2>
+  </h1>
+  
+   <div class="container">
+    <!-- ...existing code... -->
+  <title>Scheduling Algorithm Simulator</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+      body {
+      background-color: #07e6f6ee;
+      color: white;
+      font-family: 'Times New Roman', Times, serif;
+      text-align: center;
+      padding: 2rem;
+  
+    }
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 2rem;
+    }
+    .container {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 3rem;
+    }
+    .card {
+      background-color: rgba(44, 126, 85, 0.964);
+      padding: 2rem;
+      border-radius: 12px;
+      width: 300px;
+      margin: 1rem;
+      border: 1px solid #333;
+      box-shadow: 2px 2px 4px #000000;
+    }
+    select, button, input[type="text"], input[type="number"], input[type="color"] {
+      margin-top: 1rem;
+      padding: 0.6rem 1.2rem;
+      font-family: monospace;
+      font-size: 1rem;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      width: 100%;
+    }
+    select { background-color: #111; color: white; border: 1px solid #666; }
+    button { background-color: white; color: black; margin: 0.5rem; }
+    button.clear { background-color: transparent; color: white; border: 1px solid white; }
+    .process-list { text-align: left; margin-top: 1rem; }
+    .process-item { margin: 0.5rem 0; }
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      justify-content: center;
+      align-items: center;
+    }
+    .modal-content {
+      background: #111;
+      padding: 2rem;
+      border-radius: 10px;
+      width: 300px;
+    }
+    .typewriter {
+      text-shadow: 2px 2px 4px #000000;
+      background: linear-gradient(to right, #ffffff, #00ffff);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: rgba(255, 255, 255, 0.7);
+      font-size: 48px;
+      font-weight: bold;
+      overflow: hidden;
+      border-right: 0.15em solid white;
+      white-space: nowrap;
+      width: 0;
+      animation: typing 2s steps(40, end) forwards, blink 0.75s step-end 6; 
+    }
+    @keyframes typing { from {width: 0} to {width: 100%} }
+    @keyframes blink { 0%, 50% {border-color: white;} 100% {border-color: transparent;} }
+  </style>
+</head>
+<body>
+ <div class="typewriter-container">
+  <h1 class="typewriter">SCHEDULING ALGORITHM SIMULATOR</h1>
+</div>
+  <div class="container">
+<div class="card">
+      <h2>Select a scheduling algorithm to simulate.</h2>
+      <select id="algorithm">
+        <option value="">Select an algorithm</option>
+        <option value="FCFS">FCFS</option>
+        <option value="SJF">SJF</option>
+        <option value="Round Robin">Round Robin</option>
+        <option value="Priority">Priority</option>
+      </select>
+      <label><input type="checkbox" id="preemptive"> Preemptive</label>
+      <div id="quantumInput" style="display:none">
+        <label>Time Quantum</label>
+        <input type="number" id="timeQuantum" value="2" min="1">
+      </div>
+      <button onclick="submitSimulation()">Submit</button>
+    </div>
+    <div class="card">
+      <h2>Processes</h2>
+      <p>Add a process to simulate it</p>
+      <button onclick="openModal()">Add Process</button>
+      <button class="clear" onclick="clearProcesses()">Clear all processes</button>
+      <div class="process-list" id="processList"></div>
+    </div>
+  </div>
+
+  <div class="modal" id="processModal">
+    <div class="modal-content">
+      <label>Arrival Time</label>
+      <input type="number" id="arrivalTime" value="0">
+      <label>Burst Time</label>
+      <input type="number" id="modalBurstTime" value="1">
+      <div id="priorityInput" style="display:none">
+        <label>Priority</label>
+        <input type="number" id="processPriority" value="1">
+      </div>
+      <label>Choose a color for the process</label>
+      <input type="color" id="processColor" value="#ffe83f">
+      <button onclick="submitProcess()">Submit</button>
+    </div>
+  </div>
+  <div id="output" style="margin-top:3rem"></div>
+
+<script>
+    const processes = [];
+
+    document.getElementById("algorithm").addEventListener("change", function () {
+      const algo = this.value;
+      document.getElementById("priorityInput").style.display = algo === "Priority" ? "block" : "none";
+      document.getElementById("quantumInput").style.display = algo === "Round Robin" ? "block" : "none";
+    });
+
+    function openModal() {
+      document.getElementById('processModal').style.display = 'flex';
+    }
+    function closeModal() {
+      document.getElementById('processModal').style.display = 'none';
+    }
+    function submitProcess() {
+      const arrival = parseFloat(document.getElementById('arrivalTime').value);
+      const burst = parseFloat(document.getElementById('modalBurstTime').value);
+      const color = document.getElementById('processColor').value;
+      const algo = document.getElementById('algorithm').value;
+      const priority = algo === 'Priority' ? parseInt(document.getElementById('processPriority').value) : null;
+      if (!isNaN(arrival) && !isNaN(burst)) {
+        processes.push({ id: processes.length + 1, arrival, burst, color, priority });
+        renderProcessList();
+        closeModal();
+      } else alert('Please fill all fields');
+    }
+    function renderProcessList() {
+      const list = document.getElementById('processList');
+      list.innerHTML = '';
+      processes.forEach((p, i) => {
+        const div = document.createElement('div');
+        div.className = 'process-item';
+        div.innerHTML = `<span style="color:${p.color}">■</span> P${i + 1} - Arrival: ${p.arrival}, Burst: ${p.burst}${p.priority != null ? ", Priority: " + p.priority : ""}`;
+        list.appendChild(div);
+      });
+    }
+    function clearProcesses() {
+      processes.length = 0;
+      renderProcessList();
+      document.getElementById('output').innerHTML = '';
+    }
+
+    function submitSimulation() {
+      const algo = document.getElementById('algorithm').value;
+      const isPreemptive = document.getElementById('preemptive').checked;
+      const quantum = parseFloat(document.getElementById('timeQuantum').value);
+      const n = processes.length;
+      const pList = processes.map(p => ({ ...p, remaining: p.burst }));
+      let time = 0, completed = 0;
+      const ganttLog = [];
+      let table = [];
+      let totalWaiting = 0, totalTurnaround = 0;
+
+      if (algo === 'SJF' && isPreemptive) {
+        while (completed < n) {
+          const available = pList.filter(p => p.arrival <= time && p.remaining > 0);
+          if (available.length === 0) {
+            ganttLog.push({ id: 'Idle', color: '#ccc', duration: 0.1 });
+            time = +(time + 0.1).toFixed(1);
+            continue;
+          }
+          available.sort((a, b) => a.remaining - b.remaining);
+          const current = available[0];
+          current.remaining = +(current.remaining - 0.1).toFixed(1);
+          ganttLog.push({ id: `P${current.id}`, color: current.color, duration: 0.1 });
+          time = +(time + 0.1).toFixed(1);
+          if (Math.abs(current.remaining) < 1e-9) {
+            current.completion = time;
+            current.turnaround = +(current.completion - current.arrival).toFixed(2);
+            current.waiting = +(current.turnaround - current.burst).toFixed(2);
+            totalWaiting += current.waiting;
+            totalTurnaround += current.turnaround;
+            table.push(current);
+            completed++;
+          }
+        }
+      } else if (algo === 'SJF') {
+        const remaining = [...pList];
+        while (completed < n) {
+          const ready = remaining.filter(p => p.arrival <= time);
+          if (ready.length === 0) {
+            ganttLog.push({ id: 'Idle', color: '#ccc', duration: 0.1 });
+            time = +(time + 0.1).toFixed(1);
+            continue;
+          }
+          ready.sort((a, b) => a.burst - b.burst);
+          const current = ready[0];
+          time = Math.max(time, current.arrival);
+          ganttLog.push({ id: `P${current.id}`, color: current.color, duration: current.burst });
+          current.completion = +(time + current.burst).toFixed(2);
+          current.turnaround = +(current.completion - current.arrival).toFixed(2);
+          current.waiting = +(current.turnaround - current.burst).toFixed(2);
+          totalWaiting += current.waiting;
+          totalTurnaround += current.turnaround;
+          table.push(current);
+          time = current.completion;
+          completed++;
+          remaining.splice(remaining.indexOf(current), 1);
+        }
+      } else {
+        alert('Use the original logic for FCFS, RR, or Priority');
+        return;
+      }
+
+      const gantt = ganttLog.map(block => `<div style="display:inline-block;width:${block.duration * 40}px;background:${block.color};padding:10px 0;margin-right:1px;text-align:center;color:white">${block.id}</div>`).join('');
+
+      let tickMarks = '<div style="display:flex;align-items:center;">';
+      let currentTime = 0;
+      ganttLog.forEach(block => {
+        tickMarks += `<div style="width:${block.duration * 40}px;text-align:left;font-size:12px">${currentTime.toFixed(1)}</div>`;
+        currentTime = +(currentTime + block.duration).toFixed(1);
+      });
+      tickMarks += `<div style="font-size:12px">${currentTime.toFixed(1)}</div></div>`;
+
+      const avgWait = (totalWaiting / n).toFixed(2);
+      const avgTat = (totalTurnaround / n).toFixed(2);
+      const totalBurstTime = pList.reduce((sum, p) => sum + p.burst, 0);
+      const totalStartTime = Math.min(...pList.map(p => p.arrival));
+      const totalEndTime = Math.max(...pList.map(p => p.completion));
+      const totalTime = totalEndTime - totalStartTime;
+      const throughput = (n / totalTime).toFixed(2);
+      const cpuUtil = ((totalBurstTime / totalTime) * 100).toFixed(2);
+
+      const tableHTML = `
+        <table border="1" style="width:100%; margin-top:2rem; text-align:center">
+          <tr style="background:#333; color:white">
+            <th>Process ID</th>
+            <th>Arrival Time</th>
+            <th>Burst Time</th>
+            <th>Completion Time</th>
+            <th>Waiting Time</th>
+            <th>Turnaround Time</th>
+          </tr>
+          ${table.map(p => `<tr><td>${p.id}</td><td>${p.arrival}</td><td>${p.burst}</td><td>${p.completion}</td><td>${p.waiting}</td><td>${p.turnaround}</td></tr>`).join('')}
+          <tr style="background:#222;color:white">
+            <td colspan="3">Total</td><td>–</td><td>${totalWaiting.toFixed(2)}</td><td>${totalTurnaround.toFixed(2)}</td>
+          </tr>
+        </table>`;
+
+      document.getElementById('output').innerHTML = `
+        <h2>Gantt Chart</h2>
+        <div>${gantt}</div>
+        ${tickMarks}
+        ${tableHTML}
+        <div style="margin-top:2rem">
+          <strong>Avg Waiting Time:</strong> ${avgWait}<br>
+          <strong>Avg Turnaround Time:</strong> ${avgTat}<br>
+          <strong>Throughput:</strong> ${throughput} <br>
+          <strong>CPU Utilization:</strong> ${cpuUtil}%
+        </div>`;
+    }
+  </script>
+</body>
+</html>
