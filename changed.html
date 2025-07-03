@@ -8,7 +8,7 @@
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       min-height: 100vh;
-      background-image: url('Background.png');
+      background-image: url('background1.png');
       background-repeat: no-repeat;
       background-position: center;  
       background-size: cover;
@@ -21,11 +21,17 @@
     }
     h1 {
       font-size: 3rem;
-      margin-bottom: 2rem;
+      margin-bottom: 1rem;
+      letter-spacing: 3px;
+      font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
     }
     h2{
       font-size: 22px;
       font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+    }
+    h3{
+      font-size: 3rem;
+      margin-bottom: 2rem;
     }
     .container {
       display: flex;
@@ -92,10 +98,7 @@
       -webkit-background-clip: text;
       background-clip: text;
       -webkit-text-fill-color: rgba(0, 0, 0, 0.9);
-      font-size: 48px;
-      font-weight: bold;
       overflow: hidden;
-      border-right: 0.15em solid black;
       white-space: nowrap;
       width: 0;
       animation: typing 2s steps(40, end) forwards, blink 0.75s step-end 6; 
@@ -171,7 +174,8 @@
 </head>
 <body>
   <div class="typewriter-container">
-  <h1 class="typewriter">ANDC CPU SCHEDULING SIMULATOR</h1>
+  <h1 class="typewriter">ANDC</h1>
+  <h3 class="typewriter">CPU SCHEDULING SIMULATOR</h3>
 </div>
   <div class="container">
 <div class="card">
